@@ -1,0 +1,10 @@
+import {readFile,writeFile} from 'node:fs/promises';
+const html=await readFile(new URL('../dist/index.html',import.meta.url),'utf8');
+const jsPath=html.match(/<script[^>]+src="([^"]+)"[^>]*><\/script>/)?.[1];
+const cssPath=html.match(/<link[^>]+href="([^"]+\.css)"[^>]*>/)?.[1];
+if(!jsPath||!cssPath)throw new Error('Build assets not found');
+const asset=path=>readFile(new URL('../dist/'+path.replace(/^\//,''),import.meta.url),'utf8');
+const js=await asset(jsPath),css=await asset(cssPath);
+const standalone=html.replace(/<script[^>]+src="[^"]+"[^>]*><\/script>/,()=>'<script type="module">'+js.replaceAll('</script','<\\/script')+'</script>').replace(/<link[^>]+href="[^"]+\.css"[^>]*>/,()=>'<style>'+css+'</style>');
+await writeFile(new URL('../dist/Amber Run.html',import.meta.url),standalone);
+console.log('Готов автономный файл dist/Amber Run.html');
