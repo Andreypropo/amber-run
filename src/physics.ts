@@ -24,7 +24,7 @@ export class Runner {
   }
 }
 export function speedAt(seconds: number) { return Math.min(PHYSICS.maxSpeed, PHYSICS.minSpeed + seconds * PHYSICS.acceleration); }
-// Full-height flight lasts < .88s. Leave flight + recovery + reaction time even at the speed cap.
+// A full-height jump stays airborne for < .88s; preserve recovery and reaction time at the speed cap.
 export function safeGap(speed: number, random: number) { return speed * (1.18 + random * .48) + 85; }
 export function collides(runner: Runner, playerX: number, obstacle: Obstacle) {
   return playerX + 24 > obstacle.x + 9 && playerX - 16 < obstacle.x + obstacle.width - 9 && runner.y + 8 < obstacle.height - 7 && runner.y + 62 > 7;
