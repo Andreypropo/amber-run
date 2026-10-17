@@ -1,3 +1,8 @@
 node_modules/
 dist/
 .DS_Store
+
+# Local logs and machine-specific environment files
+*.log
+.env.local
+.env.*.local
