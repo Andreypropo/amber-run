@@ -38,7 +38,8 @@ window.addEventListener('keydown',e=>{
   }
   if(e.code==='Escape'||e.code==='KeyP'){e.preventDefault();if(e.repeat)return;if(status==='running')pause();else if(status==='paused')resume();}
 });
-window.addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();release();}});
+// Let focused buttons keep their native Space activation on keyup.
+window.addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='ArrowUp')release();});
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();canvas.setPointerCapture(e.pointerId);press();});canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);canvas.addEventListener('lostpointercapture',release);
 window.addEventListener('blur',()=>{pause();audio.setActive(false);});window.addEventListener('focus',()=>{if(status==='start')audio.setActive(true);});document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();audio.setActive(false);}});
 window.addEventListener('resize',()=>{if(status==='running')pause();scene.resize();particles=[];});
