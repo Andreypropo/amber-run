@@ -5,7 +5,22 @@ function jump(hold:number,dt=1/120){const r=new Runner();r.press();let max=0,tim
 test('tap and hold give controllable bounded jumps',()=>{const short=jump(.04),long=jump(1);assert(short.max>35);assert(short.max<long.max*.65);assert(long.max<170);assert(long.max>120);assert(long.time<.9);});
 test('fixed-step simulation is independent of rendering frequency',()=>{function run(fps:number){let acc=0,max=0;const r=new Runner();r.press();for(let i=0;i<fps;i++){acc+=1/fps;while(acc>=1/120){r.step(1/120);acc-=1/120;max=Math.max(max,r.y);}}return max;}assert.equal(run(30),run(60));assert.equal(run(60),run(144));});
 test('input before landing is buffered into the next jump',()=>{const r=new Runner();r.y=4;r.velocity=-100;r.groundedFor=1;r.press();let jumps=0;for(let i=0;i<15;i++)if(r.step(1/120)==='jump')jumps++;assert.equal(jumps,1);assert(r.y>0);});
-test('coyote grace allows a jump just after losing ground',()=>{const r=new Runner();r.y=2;r.velocity=-1;r.groundedFor=.025;r.press();assert.equal(r.step(1/120),'jump');});
+test('coyote grace allows an airborne jump only within the grace window', () => {
+  const step = 1 / 120;
+  const runner = new Runner();
+  runner.y = 2;
+  runner.velocity = -1;
+  runner.groundedFor = PHYSICS.coyote - 1.5 * step;
+  runner.press();
+  assert.equal(runner.step(step), 'jump');
+
+  runner.reset();
+  runner.y = 2;
+  runner.velocity = -1;
+  runner.groundedFor = PHYSICS.coyote - 0.5 * step;
+  runner.press();
+  assert.equal(runner.step(step), undefined);
+});
 test('holding never causes automatic repeated jumps',()=>{const r=new Runner();r.press();let jumps=0;for(let i=0;i<400;i++)if(r.step(1/120)==='jump')jumps++;assert.equal(jumps,1);assert.equal(r.y,0);});
 test('speed cap and spacing leave enough time for a full jump and recovery',()=>{const flight=jump(1).time;assert.equal(speedAt(10000),PHYSICS.maxSpeed);for(let t=0;t<300;t+=5){const speed=speedAt(t);assert((safeGap(speed,0)-70)/speed>flight+.25);}});
 test('each obstacle is avoidable over the whole speed range',()=>{for(const kind of ['rock','stump','crystal'] as const)for(let speed=300;speed<=570;speed+=15){let possible=false;for(let lead=.16;lead<.65;lead+=.01){const r=new Runner();r.press();const o={x:lead*speed+24,width:kind==='rock'?58:53,height:kind==='crystal'?66:51,kind,variant:0};let hit=false;for(let n=0;n<140;n++){r.step(1/120);o.x-=speed/120;if(collides(r,0,o))hit=true;}if(!hit)possible=true;}assert(possible,`${kind} at ${speed}`);}});
