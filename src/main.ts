@@ -10,6 +10,7 @@ const canvas=el<HTMLCanvasElement>('world'), scene=new Scene(canvas),runner=new 
 let status='start', distance=0, elapsed=0, visualTime=0, best=0, crashTime=0, spawnAt=0, obstacles:Obstacle[]=[],particles:Particle[]=[],last=performance.now(),accumulator=0, newBest=false;
 try{best=readBest(localStorage);audio.enabled=localStorage.getItem('amber-run-sound')!=='off';}catch{}
 function updateSound(){el('sound').innerHTML=svg(audio.enabled?'sound':'muted');el('sound').setAttribute('aria-label',audio.enabled?'Выключить звук':'Включить звук');el('sound').setAttribute('aria-pressed',String(audio.enabled));}
+function updateScore(){el('score').textContent=String(Math.floor(distance/10)).padStart(5,'0');}
 function updateBest(){el('best').textContent=String(best).padStart(5,'0');el('start-best').textContent=String(best);}
 updateBest();updateSound();
 function announce(text:string){el('announcement').textContent=text;}
@@ -20,7 +21,7 @@ function updateUI(){
     const over=status==='over';el('panel-title').textContent=over?'Ещё один закат?':'Пауза';el('panel-kicker').textContent=over?(newBest?'НОВЫЙ ЛИЧНЫЙ РЕКОРД':'ХОРОШИЙ БЫЛ ЗАБЕГ'):'МОМЕНТ ПЕРЕДЫШКИ';el('panel-copy').textContent=over?'У каждого приключения есть продолжение.':'Долина подождёт.';el('results').hidden=!over;el('resume').innerHTML=(over?'Ещё раз':'Продолжить')+svg(over?'restart':'play');el('final-score').innerHTML=`${Math.floor(distance/10)} <small>м</small>`;el('final-best').innerHTML=`${best} <small>м</small>`;el('resume').focus({preventScroll:true});
   }
 }
-function start(){status='running';distance=0;elapsed=0;runner.reset();obstacles=[];particles=[];spawnAt=scene.w*.72;crashTime=0;newBest=false;accumulator=0;void audio.unlock();audio.setActive(true);updateUI();announce('Забег начался');el('play').blur();el('resume').blur();}
+function start(){status='running';distance=0;updateScore();elapsed=0;runner.reset();obstacles=[];particles=[];spawnAt=scene.w*.72;crashTime=0;newBest=false;accumulator=0;void audio.unlock();audio.setActive(true);updateUI();announce('Забег начался');el('play').blur();el('resume').blur();}
 function pause(){if(status!=='running')return;status='paused';runner.release();runner.buffered=0;audio.setActive(false);updateUI();announce('Пауза');}
 function resume(){if(status==='over'){start();return;}if(status!=='paused')return;status='running';last=performance.now();accumulator=0;void audio.unlock();audio.setActive(true);updateUI();el('resume').blur();}
 function home(){status='start';runner.reset();obstacles=[];particles=[];updateUI();el('play').focus({preventScroll:true});audio.setActive(true);}
@@ -50,7 +51,7 @@ function fixedUpdate(dt:number){
     if(distance>=spawnAt){const kind=(['rock','stump','crystal'] as const)[Math.floor(Math.random()*3)], height=kind==='crystal'?66:kind==='stump'?49:38+Math.random()*13,width=kind==='rock'?58:kind==='stump'?53:49;
       obstacles.push({x:scene.w+60,width,height,kind,variant:Math.random()});spawnAt=distance+safeGap(speed,Math.random());}
     for(const obstacle of obstacles){obstacle.x-=speed*dt;if(collides(runner,scene.playerX,obstacle)){crash();break;}}
-    obstacles=obstacles.filter(o=>o.x+o.width>-20);el('score').textContent=String(Math.floor(distance/10)).padStart(5,'0');
+    obstacles=obstacles.filter(o=>o.x+o.width>-20);updateScore();
   } else if(status==='crashed'){crashTime+=dt;if(crashTime>.48){status='over';updateUI();announce(`Забег окончен. ${Math.floor(distance/10)} метров. Рекорд ${best}.`);}}
   else if(status==='start')distance+=32*dt;
   if(status!=='paused')for(const p of particles){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=180*dt;}particles=particles.filter(p=>p.life>0);
